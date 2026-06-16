@@ -21,8 +21,8 @@ class OrderBook {
     bool hasBids() const;
     bool hasAsks() const;
 
-    bool bestBid() const;
-    bool bestAsk() const;
+    double bestBid() const;
+    double bestAsk() const;
 
   private:
     std::map<double, PriceLevel, std::greater<double>> bids;

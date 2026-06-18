@@ -20,10 +20,42 @@ bool OrderBook::cancelOrder(uint64_t orderId){
     Order& order = it->second;
 
     if(order.side == Side::BUY){
-        bids.erase(order.price);
+        auto levelIt = bids.find(order.price);
+        if(levelIt != bids.end()){
+            std::queue<Order> filtered;
+            while(!levelIt->second.empty()){
+                Order front = levelIt->second.front();
+                levelIt->second.pop();
+                if(front.orderId != orderId){
+                    filtered.push(front);
+                }
+            }
+            if(filtered.empty()){
+                bids.erase(levelIt);
+            }
+            else{
+                levelIt->second = filtered;
+            }
+        }
     }
     else{
-        asks.erase(order.price);
+        auto levelIt = asks.find(order.price);
+        if(levelIt != asks.end()){
+            std::queue<Order> filtered;
+            while(!levelIt->second.empty()){
+                Order front = levelIt->second.front();
+                levelIt->second.pop();
+                if(front.orderId != orderId){
+                    filtered.push(front);
+                }
+            }
+            if(filtered.empty()){
+                asks.erase(levelIt);
+            }
+            else{
+                levelIt->second = filtered;
+            }
+        }
     }
 
     orderLookup.erase(it);

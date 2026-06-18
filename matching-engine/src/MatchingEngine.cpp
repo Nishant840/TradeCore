@@ -32,7 +32,7 @@ void MatchingEngine::matchLimit(Order& order){
             double bestAsk = book.bestAsk();
             if(order.price < bestAsk) break;
 
-            auto& queue = book.getAsks()[bestAsk];
+            auto& queue = book.getAsks().find(bestAsk)->second;
             while(order.quantity > 0 && !queue.empty()){
                 Order& resting = queue.front();
                 uint64_t traded = std::min(order.quantity, resting.quantity);
@@ -44,7 +44,7 @@ void MatchingEngine::matchLimit(Order& order){
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    book.getAsks()[bestAsk].pop();
+                    queue.pop();
                 }
             }
 
@@ -58,7 +58,7 @@ void MatchingEngine::matchLimit(Order& order){
             double bestBid = book.bestBid();
             if(order.price > bestBid) break;
 
-            auto& queue = book.getBids()[bestBid];
+            auto& queue = book.getBids().find(bestBid)->second;
             while(order.quantity > 0 && !queue.empty()){
                 Order& resting = queue.front();
                 uint64_t traded = std::min(order.quantity, resting.quantity);
@@ -70,7 +70,7 @@ void MatchingEngine::matchLimit(Order& order){
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    book.getBids()[bestBid].pop();
+                    queue.pop();
                 }
             }
 
@@ -85,7 +85,7 @@ void MatchingEngine::matchMarket(Order& order){
     if(order.side == Side::BUY){
         while(order.quantity > 0 && book.hasAsks()){
             double bestAsk = book.bestAsk();
-            auto& queue = book.getAsks()[bestAsk];
+            auto& queue = book.getAsks().find(bestAsk)->second;
 
             while(order.quantity > 0 && !queue.empty()){
                 Order& resting = queue.front();
@@ -110,7 +110,7 @@ void MatchingEngine::matchMarket(Order& order){
     else{
         while(order.quantity > 0 && book.hasBids()){
             double bestBid = book.bestBid();
-            auto& queue    = book.getBids()[bestBid];
+            auto& queue    = book.getBids().find(bestBid)->second;
 
             while(order.quantity > 0 && !queue.empty()){
                 Order& resting = queue.front();

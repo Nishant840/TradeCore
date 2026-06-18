@@ -5,7 +5,7 @@
 
 enum class Side {
     BUY,
-    SELl
+    SELL
 };
 
 enum class OrderType {

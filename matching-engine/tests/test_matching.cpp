@@ -25,7 +25,7 @@ TEST_CASE("Full fill - limit buy matches limit sell"){
         trades.push_back(t);
     });
 
-    Order sell = makeOrder(1, Side::SELl, OrderType::LIMIT, 100.0, 10);
+    Order sell = makeOrder(1, Side::SELL, OrderType::LIMIT, 100.0, 10);
     Order buy  = makeOrder(2, Side::BUY, OrderType::LIMIT, 100.0, 10);
 
     engine.processOrder(sell);
@@ -42,7 +42,7 @@ TEST_CASE("No match - buy price below ask"){
         trades.push_back(t);
     });
 
-    Order sell = makeOrder(1, Side::SELl, OrderType::LIMIT, 105.0, 10);
+    Order sell = makeOrder(1, Side::SELL, OrderType::LIMIT, 105.0, 10);
     Order buy  = makeOrder(2, Side::BUY, OrderType::LIMIT, 100.0, 10);
 
     engine.processOrder(sell);
@@ -57,7 +57,7 @@ TEST_CASE("Partial fill - buy quantity greater than sell"){
         trades.push_back(t);
     });
 
-    Order sell = makeOrder(1, Side::SELl, OrderType::LIMIT, 100.0, 5);
+    Order sell = makeOrder(1, Side::SELL, OrderType::LIMIT, 100.0, 5);
     Order buy  = makeOrder(2, Side::BUY, OrderType::LIMIT, 100.0, 10);
 
     engine.processOrder(sell);
@@ -74,7 +74,7 @@ TEST_CASE("Market buy fills against resting sells"){
         trades.push_back(t);
     });
 
-    Order sell = makeOrder(1, Side::SELl, OrderType::LIMIT, 100.0, 10);
+    Order sell = makeOrder(1, Side::SELL, OrderType::LIMIT, 100.0, 10);
     Order buy  = makeOrder(2, Side::BUY, OrderType::MARKET, 0.0, 10);
 
     engine.processOrder(sell);
@@ -102,8 +102,8 @@ TEST_CASE("Multiple resting orders - FIFO priority"){
         trades.push_back(t);
     });
 
-    Order sell1 = makeOrder(1, Side::SELl, OrderType::LIMIT, 100.0, 5);
-    Order sell2 = makeOrder(2, Side::SELl, OrderType::LIMIT, 100.0, 5);
+    Order sell1 = makeOrder(1, Side::SELL, OrderType::LIMIT, 100.0, 5);
+    Order sell2 = makeOrder(2, Side::SELL, OrderType::LIMIT, 100.0, 5);
     Order buy   = makeOrder(3, Side::BUY, OrderType::LIMIT, 100.0, 10);
 
     engine.processOrder(sell1);
@@ -121,7 +121,7 @@ TEST_CASE("Cancel order - removed from book"){
         trades.push_back(t);
     });
 
-    Order sell = makeOrder(1, Side::SELl, OrderType::LIMIT, 100.0, 10);
+    Order sell = makeOrder(1, Side::SELL, OrderType::LIMIT, 100.0, 10);
     engine.processOrder(sell);
     engine.cancelOrder(1);
 

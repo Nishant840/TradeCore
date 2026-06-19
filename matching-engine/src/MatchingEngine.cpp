@@ -6,6 +6,9 @@ MatchingEngine::MatchingEngine(TradeCallback callback)
     : onTrade(callback), nextTradeId(1) {}
 
 bool MatchingEngine::processOrder(Order& order){
+    auto start = std::chrono::high_resolution_clock::now();
+
+    bool accepted;
     if(order.type == OrderType::LIMIT){
         matchLimit(order);
     }
@@ -14,10 +17,20 @@ bool MatchingEngine::processOrder(Order& order){
     }
 
     if(order.type == OrderType::LIMIT && order.quantity > 0){
-        return book.addOrder(order);
+        accepted = book.addOrder(order);
+    }
+    else{
+        accepted = true;
     }
 
-    return true;
+    auto end = std::chrono::high_resolution_clock::now();
+    uint64_t durationMicros = std::chrono::duration_cast<std::chrono::microseconds>(
+        end-start
+    ).count();
+
+    metrics.recordOrderLatecy(durationMicros);
+
+    return accepted;
 }
 
 bool MatchingEngine::cancelOrder(uint64_t orderId){
@@ -26,6 +39,10 @@ bool MatchingEngine::cancelOrder(uint64_t orderId){
 
 const OrderBook& MatchingEngine::getOrderBook() const {
     return book;
+}
+
+const Metrics& MatchingEngine::getMetrics() const{
+    return metrics;
 }
 
 void MatchingEngine::matchLimit(Order& order){
@@ -145,6 +162,8 @@ Trade MatchingEngine::createTrade(
         t.price         = price;
         t.quantity      = quantity;
         t.timestamp     = ts;
+
+        metrics.incrementTradeCount();
 
         return t;
 }

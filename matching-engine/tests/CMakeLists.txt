@@ -8,6 +8,7 @@ add_executable(tests
     test_matching.cpp
     ../src/OrderBook.cpp
     ../src/MatchingEngine.cpp
+    ../src/Metrics.cpp
 )
 
 target_include_directories(tests PRIVATE ../)

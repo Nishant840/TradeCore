@@ -169,3 +169,19 @@ TEST_CASE("Duplicate orderId on add is rejected, not silently overwritten") {
     bool cancelledAgain = engine.cancelOrder(201);
     REQUIRE(cancelledAgain == false);
 }
+
+TEST_CASE("Metrics track order count, trade count, and latency") {
+    std::vector<Trade> trades;
+    MatchingEngine engine([&](const Trade& t) { trades.push_back(t); });
+
+    Order sell = makeOrder(301, Side::SELL, OrderType::LIMIT, 100.0, 10);
+    Order buy  = makeOrder(302, Side::BUY,  OrderType::LIMIT, 100.0, 10);
+
+    engine.processOrder(sell);
+    engine.processOrder(buy);
+
+    REQUIRE(engine.getMetrics().getTotalOrders() == 2);
+    REQUIRE(engine.getMetrics().getTotalTrades() == 1);
+    REQUIRE(engine.getMetrics().p50() >= 0);
+    REQUIRE(engine.getMetrics().p99() >= engine.getMetrics().p50());
+}

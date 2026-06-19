@@ -2,6 +2,7 @@
 
 #include "Order.h"
 #include "OrderBook.h"
+#include "Metrics.h"
 
 #include<vector>
 #include<functional>
@@ -26,11 +27,13 @@ class MatchingEngine{
     bool cancelOrder(uint64_t orderId);
 
     const OrderBook& getOrderBook() const;
+    const Metrics& getMetrics() const;
 
   private:
     OrderBook       book;
     TradeCallback   onTrade;
     uint64_t        nextTradeId;
+    Metrics         metrics;
 
     void matchLimit(Order& order);
     void matchMarket(Order& order);

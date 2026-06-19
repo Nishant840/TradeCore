@@ -1,6 +1,9 @@
 #include "../include/OrderBook.h"
 
-void OrderBook::addOrder(const Order& order) {
+bool OrderBook::addOrder(const Order& order) {
+    if(orderLookup.find(order.orderId) != orderLookup.end()){
+        return false;
+    }
     OrderNode node{order};
 
     if(order.side == Side::BUY){
@@ -15,6 +18,8 @@ void OrderBook::addOrder(const Order& order) {
         auto it = std::prev(level.end());
         orderLookup[order.orderId] = OrderMeta{it, Side::SELL, order.price};
     }
+
+    return true;
 }
 
 bool OrderBook::cancelOrder(uint64_t orderId){

@@ -20,7 +20,7 @@ using OrderIterator = std::list<OrderNode>::iterator;
 
 class OrderBook {
   public:
-    void addOrder(const Order& order);
+    bool addOrder(const Order& order);
     bool cancelOrder(uint64_t orderId);
     void removeFilledOrder(uint64_t orderId, Side side, int64_t price);
 

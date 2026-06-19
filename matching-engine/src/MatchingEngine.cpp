@@ -5,7 +5,7 @@
 MatchingEngine::MatchingEngine(TradeCallback callback)
     : onTrade(callback), nextTradeId(1) {}
 
-void MatchingEngine::processOrder(Order& order){
+bool MatchingEngine::processOrder(Order& order){
     if(order.type == OrderType::LIMIT){
         matchLimit(order);
     }
@@ -14,8 +14,10 @@ void MatchingEngine::processOrder(Order& order){
     }
 
     if(order.type == OrderType::LIMIT && order.quantity > 0){
-        book.addOrder(order);
+        return book.addOrder(order);
     }
+
+    return true;
 }
 
 bool MatchingEngine::cancelOrder(uint64_t orderId){

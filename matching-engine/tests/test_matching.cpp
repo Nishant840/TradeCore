@@ -149,3 +149,23 @@ TEST_CASE("Cancel on fully filled order does not crash or double-trade") {
 
     REQUIRE(result == false);
 }
+
+TEST_CASE("Duplicate orderId on add is rejected, not silently overwritten") {
+    std::vector<Trade> trades;
+    MatchingEngine engine([&](const Trade& t) { trades.push_back(t); });
+
+    Order first  = makeOrder(201, Side::SELL, OrderType::LIMIT, 60000.0, 1);
+    bool firstOk = engine.processOrder(first);
+
+    Order duplicate  = makeOrder(201, Side::SELL, OrderType::LIMIT, 61000.0, 1);
+    bool duplicateOk = engine.processOrder(duplicate);
+
+    REQUIRE(firstOk     == true);
+    REQUIRE(duplicateOk == false);
+
+    bool cancelled = engine.cancelOrder(201);
+    REQUIRE(cancelled == true);
+
+    bool cancelledAgain = engine.cancelOrder(201);
+    REQUIRE(cancelledAgain == false);
+}

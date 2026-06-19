@@ -29,38 +29,40 @@ const OrderBook& MatchingEngine::getOrderBook() const {
 void MatchingEngine::matchLimit(Order& order){
     if(order.side == Side::BUY){
         while(order.quantity > 0 && book.hasAsks()){
-            double bestAsk = book.bestAsk();
+            int64_t bestAsk = book.bestAsk();
             if(order.price < bestAsk) break;
 
-            auto& queue = book.getAsks().find(bestAsk)->second;
-            while(order.quantity > 0 && !queue.empty()){
-                Order& resting = queue.front();
-                uint64_t traded = std::min(order.quantity, resting.quantity);
+            auto& level = book.getAsks().find(bestAsk)->second;
+            while(order.quantity > 0 && !level.empty()){
+                OrderNode& node     = level.front();
+                Order& resting      = node.order;
+                uint64_t traded     = std::min(order.quantity, resting.quantity);
 
                 Trade t = createTrade(order, resting, bestAsk, traded);
                 onTrade(t);
 
-                order.quantity   -= traded;
-                resting.quantity -= traded;
+                order.quantity      -= traded;
+                resting.quantity    -= traded;
 
                 if(resting.quantity == 0){
-                    queue.pop();
+                    level.erase(level.begin());
                 }
             }
 
-            if(queue.empty()){
+            if(level.empty()){
                 book.getAsks().erase(bestAsk);
             }
         }
     }
     else{
         while(order.quantity > 0 && book.hasBids()){
-            double bestBid = book.bestBid();
+            int64_t bestBid = book.bestBid();
             if(order.price > bestBid) break;
 
-            auto& queue = book.getBids().find(bestBid)->second;
-            while(order.quantity > 0 && !queue.empty()){
-                Order& resting = queue.front();
+            auto& level = book.getBids().find(bestBid)->second;
+            while(order.quantity > 0 && !level.empty()){
+                OrderNode& node = level.front();
+                Order& resting  = node.order;
                 uint64_t traded = std::min(order.quantity, resting.quantity);
 
                 Trade t = createTrade(resting, order, bestBid, traded);
@@ -70,11 +72,11 @@ void MatchingEngine::matchLimit(Order& order){
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    queue.pop();
+                    level.erase(level.begin());
                 }
             }
 
-            if(queue.empty()){
+            if(level.empty()){
                 book.getBids().erase(bestBid);
             }
         }
@@ -84,49 +86,51 @@ void MatchingEngine::matchLimit(Order& order){
 void MatchingEngine::matchMarket(Order& order){
     if(order.side == Side::BUY){
         while(order.quantity > 0 && book.hasAsks()){
-            double bestAsk = book.bestAsk();
-            auto& queue = book.getAsks().find(bestAsk)->second;
+            int64_t bestAsk = book.bestAsk();
+            auto& level = book.getAsks().find(bestAsk)->second;
 
-            while(order.quantity > 0 && !queue.empty()){
-                Order& resting = queue.front();
+            while(order.quantity > 0 && !level.empty()){
+                OrderNode& node = level.front();
+                Order& resting  = node.order;
                 uint64_t traded = std::min(order.quantity, resting.quantity);
 
                 Trade t = createTrade(order, resting, bestAsk, traded);
                 onTrade(t);
 
-                order.quantity   -= traded;
+                order.quantity -= traded;
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    queue.pop();
+                    level.erase(level.begin());
                 }
             }
 
-            if(queue.empty()){
+            if(level.empty()){
                 book.getAsks().erase(bestAsk);
             }
         }
     }
     else{
         while(order.quantity > 0 && book.hasBids()){
-            double bestBid = book.bestBid();
-            auto& queue    = book.getBids().find(bestBid)->second;
+            int64_t bestBid = book.bestBid();
+            auto& level    = book.getBids().find(bestBid)->second;
 
-            while(order.quantity > 0 && !queue.empty()){
-                Order& resting = queue.front();
-                uint64_t traded = std::min (order.quantity, resting.quantity);
+            while(order.quantity > 0 && !level.empty()){
+                OrderNode& node = level.front();
+                Order& resting  = node.order;
+                uint64_t traded = std::min(order.quantity, resting.quantity);
 
                 Trade t = createTrade(resting, order, bestBid, traded);
                 onTrade(t);
 
-                order.quantity  -= traded;
+                order.quantity -= traded;
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    queue.pop();
+                    level.erase(level.begin());
                 }
             }
-            if(queue.empty()){
+            if(level.empty()){
                 book.getBids().erase(bestBid);
             }
         }
@@ -136,7 +140,7 @@ void MatchingEngine::matchMarket(Order& order){
 Trade MatchingEngine::createTrade( 
     const Order& buy,
     const Order& sell,
-    double price,
+    int64_t price,
     uint64_t quantity){
         auto now = std::chrono::high_resolution_clock::now();
         uint64_t ts = std::chrono::duration_cast<std::chrono::microseconds>(

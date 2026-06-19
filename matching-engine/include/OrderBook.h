@@ -7,25 +7,40 @@
 #include<unordered_map>
 #include<functional>
 #include<cstdint>
+#include<list>
 
-using PriceLevel = std::queue<Order>;
+struct OrderNode{
+    Order order;
+};
+
+using PriceLevel    = std::list<OrderNode>;
+using PriceLevelMap = std::map<int64_t, PriceLevel, std::greater<int64_t>>;
+using AskLevelMap   = std::map<int64_t, PriceLevel>;
+using OrderIterator = std::list<OrderNode>::iterator;
 
 class OrderBook {
   public:
     void addOrder(const Order& order);
     bool cancelOrder(uint64_t orderId);
 
-    std::map<double, PriceLevel, std::greater<double>>& getBids();
-    std::map<double, PriceLevel>& getAsks();
+    PriceLevelMap& getBids();
+    AskLevelMap& getAsks();
 
     bool hasBids() const;
     bool hasAsks() const;
 
-    double bestBid() const;
-    double bestAsk() const;
+    int64_t bestBid() const;
+    int64_t bestAsk() const;
 
   private:
-    std::map<double, PriceLevel, std::greater<double>> bids;
-    std::map<double, PriceLevel>                       asks;
-    std::unordered_map<uint64_t, Order>                orderLookup;
+    PriceLevelMap bids;
+    AskLevelMap   asks;
+
+    struct OrderMeta{
+      OrderIterator iterator;
+      Side          side;
+      int64_t       price;
+    };
+
+    std::unordered_map<uint64_t, OrderMeta> orderLookup;
 };

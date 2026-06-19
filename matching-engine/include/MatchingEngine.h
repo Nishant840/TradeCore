@@ -11,7 +11,7 @@ struct Trade{
     uint64_t tradeId;
     uint64_t buyOrderId;
     uint64_t sellOrderId;
-    double price;
+    int64_t price;
     uint64_t quantity;
     uint64_t timestamp;
 };
@@ -37,7 +37,7 @@ class MatchingEngine{
 
     Trade createTrade(const Order& buy,
                       const Order& sell,
-                      double price,
+                      int64_t price,
                       uint64_t quantity
                     );
 };

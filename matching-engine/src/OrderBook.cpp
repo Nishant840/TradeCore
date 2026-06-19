@@ -1,72 +1,53 @@
 #include "../include/OrderBook.h"
 
 void OrderBook::addOrder(const Order& order) {
-    orderLookup[order.orderId] = order;
+    OrderNode node{order};
 
     if(order.side == Side::BUY){
-        bids[order.price].push(order);
+        auto& level = bids[order.price];
+        level.push_back(node);
+        auto it = std::prev(level.end());
+        orderLookup[order.orderId] = OrderMeta{it, Side::BUY, order.price};
     }
     else{
-        asks[order.price].push(order);
+        auto& level = asks[order.price];
+        level.push_back(node);
+        auto it = std::prev(level.end());
+        orderLookup[order.orderId] = OrderMeta{it, Side::SELL, order.price};
     }
 }
 
 bool OrderBook::cancelOrder(uint64_t orderId){
-    auto it = orderLookup.find(orderId);
-    if(it == orderLookup.end()){
+    auto metaIt = orderLookup.find(orderId);
+    if(metaIt == orderLookup.end()){
         return false;
     }
 
-    Order& order = it->second;
+    OrderMeta& meta = metaIt->second;
 
-    if(order.side == Side::BUY){
-        auto levelIt = bids.find(order.price);
-        if(levelIt != bids.end()){
-            std::queue<Order> filtered;
-            while(!levelIt->second.empty()){
-                Order front = levelIt->second.front();
-                levelIt->second.pop();
-                if(front.orderId != orderId){
-                    filtered.push(front);
-                }
-            }
-            if(filtered.empty()){
-                bids.erase(levelIt);
-            }
-            else{
-                levelIt->second = filtered;
-            }
+    if(meta.side == Side::BUY){
+        auto& level = bids[meta.price];
+        level.erase(meta.iterator);
+        if(level.empty()){
+            bids.erase(meta.price);
         }
     }
     else{
-        auto levelIt = asks.find(order.price);
-        if(levelIt != asks.end()){
-            std::queue<Order> filtered;
-            while(!levelIt->second.empty()){
-                Order front = levelIt->second.front();
-                levelIt->second.pop();
-                if(front.orderId != orderId){
-                    filtered.push(front);
-                }
-            }
-            if(filtered.empty()){
-                asks.erase(levelIt);
-            }
-            else{
-                levelIt->second = filtered;
-            }
+        auto& level = asks[meta.price];
+        level.erase(meta.iterator);
+        if(level.empty()){
+            asks.erase(meta.price);
         }
     }
 
-    orderLookup.erase(it);
+    orderLookup.erase(metaIt);
     return true;
 }
 
-std::map<double, PriceLevel, std::greater<double>>& OrderBook::getBids(){
+PriceLevelMap& OrderBook::getBids() {
     return bids;
 }
-
-std::map<double, PriceLevel>& OrderBook::getAsks(){
+AskLevelMap& OrderBook::getAsks(){
     return asks;
 }
 
@@ -78,10 +59,10 @@ bool OrderBook::hasAsks() const {
     return !asks.empty();
 }
 
-double OrderBook::bestBid() const {
+int64_t OrderBook::bestBid() const {
     return bids.begin()->first;
 }
 
-double OrderBook::bestAsk() const {
+int64_t OrderBook::bestAsk() const {
     return asks.begin()->first;
 }

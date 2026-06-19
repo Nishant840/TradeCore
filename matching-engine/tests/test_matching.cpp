@@ -1,21 +1,21 @@
 #include "catch_amalgamated.hpp"
 #include "../include/MatchingEngine.h"
 
-uint64_t now(){
+uint64_t nowMicros(){
     return std::chrono::duration_cast<std::chrono::microseconds>(
         std::chrono::high_resolution_clock::now().time_since_epoch()
     ).count();
 }
 
-Order makeOrder(uint64_t id, Side side, OrderType type, double price, uint64_t qty){
+Order makeOrder(uint64_t id, Side side, OrderType type, double humanPrice, uint64_t qty){
     Order o;
     o.orderId   = id;
     o.userId    = "user_" + std::to_string(id);
     o.side      = side;
     o.type      = type;
-    o.price     = price;
+    o.price     = toTicks(humanPrice);
     o.quantity  = qty;
-    o.timestamp = now();
+    o.timestamp = nowMicros();
     return o;
 }
 
@@ -33,7 +33,7 @@ TEST_CASE("Full fill - limit buy matches limit sell"){
 
     REQUIRE(trades.size() == 1);
     REQUIRE(trades[0].quantity == 10);
-    REQUIRE(trades[0].price == 100.0);
+    REQUIRE(trades[0].price == toTicks(100.0));
 }
 
 TEST_CASE("No match - buy price below ask"){

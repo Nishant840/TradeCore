@@ -185,3 +185,70 @@ TEST_CASE("Metrics track order count, trade count, and latency") {
     REQUIRE(engine.getMetrics().p50() >= 0);
     REQUIRE(engine.getMetrics().p99() >= engine.getMetrics().p50());
 }
+
+#include "../include/EngineRunner.h"
+#include <thread>
+#include <vector>
+#include <atomic>
+
+TEST_CASE("Concurrent stress test - quantity conservation under multiple producer threads"){
+    std::atomic<uint64_t> totalTradedQty{0};
+    std::atomic<uint64_t> tradeCount{0};
+
+    EngineRunner runner([&](const Trade& t) {
+        totalTradedQty.fetch_add(t.quantity, std::memory_order_relaxed);
+        tradeCount.fetch_add(1, std::memory_order_relaxed);
+    });
+
+    runner.start();
+
+    const int numThreads      = 4;
+    const int ordersPerThread = 250;
+    const double price        = 100.0;
+
+    std::vector<std::thread> producers;
+
+    for (int t = 0; t < numThreads; ++t) {
+        producers.emplace_back([&runner, t, ordersPerThread, price]() {
+            uint64_t baseId = static_cast<uint64_t>(t) * ordersPerThread * 2 + 1;
+
+            for (int i = 0; i < ordersPerThread; ++i) {
+                Order buy;
+                buy.orderId   = baseId + i * 2;
+                buy.userId    = "buyer";
+                buy.side      = Side::BUY;
+                buy.type      = OrderType::LIMIT;
+                buy.price     = toTicks(price);
+                buy.quantity  = 1;
+                buy.timestamp = 0;
+
+                Order sell;
+                sell.orderId   = baseId + i * 2 + 1;
+                sell.userId    = "seller";
+                sell.side      = Side::SELL;
+                sell.type      = OrderType::LIMIT;
+                sell.price     = toTicks(price);
+                sell.quantity  = 1;
+                sell.timestamp = 0;
+
+                runner.submitOrder(buy);
+                runner.submitOrder(sell);
+            }
+        });
+    }
+
+    for (auto& th : producers) {
+        th.join();
+    }
+
+    runner.stop();
+
+    uint64_t totalOrdersSubmitted = numThreads * ordersPerThread * 2;
+    uint64_t expectedTradedQty    = numThreads * ordersPerThread;
+
+    REQUIRE(runner.getEngine().getMetrics().getTotalOrders() == totalOrdersSubmitted);
+    REQUIRE(totalTradedQty.load() == expectedTradedQty);
+    REQUIRE(tradeCount.load()     >= 1);
+    REQUIRE(runner.getEngine().getOrderBook().hasBids() == false);
+    REQUIRE(runner.getEngine().getOrderBook().hasAsks() == false);
+}

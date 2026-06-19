@@ -23,7 +23,7 @@ class MatchingEngine{
     explicit MatchingEngine(TradeCallback callback);
 
     void processOrder(Order& order);
-    void cancelOrder(uint64_t orderId);
+    bool cancelOrder(uint64_t orderId);
 
     const OrderBook& getOrderBook() const;
 

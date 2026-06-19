@@ -18,8 +18,8 @@ void MatchingEngine::processOrder(Order& order){
     }
 }
 
-void MatchingEngine::cancelOrder(uint64_t orderId){
-    book.cancelOrder(orderId);
+bool MatchingEngine::cancelOrder(uint64_t orderId){
+    return book.cancelOrder(orderId);
 }
 
 const OrderBook& MatchingEngine::getOrderBook() const {
@@ -45,12 +45,9 @@ void MatchingEngine::matchLimit(Order& order){
                 resting.quantity    -= traded;
 
                 if(resting.quantity == 0){
-                    level.erase(level.begin());
+                    uint64_t filledId = resting.orderId;
+                    book.removeFilledOrder(filledId, Side::SELL,bestAsk);
                 }
-            }
-
-            if(level.empty()){
-                book.getAsks().erase(bestAsk);
             }
         }
     }
@@ -72,12 +69,9 @@ void MatchingEngine::matchLimit(Order& order){
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    level.erase(level.begin());
+                    uint64_t filledId = resting.orderId;
+                    book.removeFilledOrder(filledId, Side::BUY, bestBid);
                 }
-            }
-
-            if(level.empty()){
-                book.getBids().erase(bestBid);
             }
         }
     }
@@ -101,12 +95,9 @@ void MatchingEngine::matchMarket(Order& order){
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    level.erase(level.begin());
+                    uint64_t filledId = resting.orderId;
+                    book.removeFilledOrder(filledId, Side::SELL, bestAsk);
                 }
-            }
-
-            if(level.empty()){
-                book.getAsks().erase(bestAsk);
             }
         }
     }
@@ -127,11 +118,9 @@ void MatchingEngine::matchMarket(Order& order){
                 resting.quantity -= traded;
 
                 if(resting.quantity == 0){
-                    level.erase(level.begin());
+                    uint64_t filledId = resting.orderId;
+                    book.removeFilledOrder(filledId, Side::BUY, bestBid);
                 }
-            }
-            if(level.empty()){
-                book.getBids().erase(bestBid);
             }
         }
     }

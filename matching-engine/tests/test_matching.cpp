@@ -130,3 +130,22 @@ TEST_CASE("Cancel order - removed from book"){
 
     REQUIRE(trades.size() == 0);
 }
+
+TEST_CASE("Cancel on fully filled order does not crash or double-trade") {
+    std::vector<Trade> trades;
+    MatchingEngine engine([&](const Trade& t){ 
+        trades.push_back(t);
+    });
+
+    Order sell = makeOrder(101, Side::SELL, OrderType::LIMIT, 60000.0, 1);
+    engine.processOrder(sell);
+
+    Order buy = makeOrder(102, Side::BUY, OrderType::MARKET, 0.0, 1);
+    engine.processOrder(buy);
+
+    REQUIRE(trades.size() == 1);
+
+    bool result = engine.cancelOrder(101);
+
+    REQUIRE(result == false);
+}

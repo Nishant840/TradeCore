@@ -22,6 +22,7 @@ class OrderBook {
   public:
     void addOrder(const Order& order);
     bool cancelOrder(uint64_t orderId);
+    void removeFilledOrder(uint64_t orderId, Side side, int64_t price);
 
     PriceLevelMap& getBids();
     AskLevelMap& getAsks();

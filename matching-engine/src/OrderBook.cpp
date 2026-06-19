@@ -44,6 +44,30 @@ bool OrderBook::cancelOrder(uint64_t orderId){
     return true;
 }
 
+void OrderBook::removeFilledOrder(uint64_t orderId, Side side, int64_t price){
+    auto metaIt = orderLookup.find(orderId);
+    if(metaIt == orderLookup.end()){
+        return;
+    }
+
+    if(side == Side::BUY){
+        auto& level = bids[price];
+        level.erase(metaIt->second.iterator);
+        if(level.empty()){
+            bids.erase(price);
+        }
+    }
+    else{
+        auto& level = asks[price];
+        level.erase(metaIt->second.iterator);
+        if(level.empty()){
+            asks.erase(price);
+        }
+    }
+
+    orderLookup.erase(metaIt);
+}
+
 PriceLevelMap& OrderBook::getBids() {
     return bids;
 }

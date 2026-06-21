@@ -8,6 +8,7 @@ class EngineClient extends EventEmitter {
         this.port   = port;
         this.socket = null;
         this.buffer = '';
+        this.pendingRequests = new Map();
     }
 
     connect() {
@@ -28,7 +29,7 @@ class EngineClient extends EventEmitter {
 
                 try{
                     const message = JSON.parse(line);
-                    this.emit('message', message);
+                    this._handleMessage(message);
                 }
                 catch (err){
                     console.error('Failed to parse engine message:', err.message);
@@ -44,6 +45,18 @@ class EngineClient extends EventEmitter {
             console.log('Engine connection closed');
             this.emit('disconnected');
         });
+    }
+
+    _handleMessage(message){
+        if(message.requestId && this.pendingRequests.has(message.requestId)){
+            const { resolve, timeoutHandle } = this.pendingRequests.get(message.requestId);
+            clearTimeout(timeoutHandle);
+            this.pendingRequests.delete(message.requestId);
+            resolve(message);
+            return;
+        }
+
+        this.emit('message', message);
     }
 
     sendOrder(order){
@@ -67,6 +80,29 @@ class EngineClient extends EventEmitter {
         this._send(message);
     }
 
+    requestBook(requestId, depth = 10){
+        return new Promise((resolve, reject) => {
+            const timeoutHandle = setTimeout(()=>{
+                this.pendingRequests.delete(requestId);
+                reject(new Error("Engine did not respond in time"));
+            }, 2000);
+            
+            this.pendingRequests.set(requestId, {resolve, timeoutHandle});
+
+            try{
+                this._send({
+                    cmd: 'get_book',
+                    requestId,
+                    depth
+                });
+            }
+            catch(err){
+                clearTimeout(timeoutHandle);
+                this.pendingRequests.delete(requestId);
+                reject(err);
+            }
+        });
+    }
     _send(message){
         if(!this.socket || this.socket.destroyed) {
             throw new Error('Engine socket not connected');

@@ -18,6 +18,11 @@ using PriceLevelMap = std::map<int64_t, PriceLevel, std::greater<int64_t>>;
 using AskLevelMap   = std::map<int64_t, PriceLevel>;
 using OrderIterator = std::list<OrderNode>::iterator;
 
+struct PriceLevelSummary{
+  int64_t   price;
+  uint64_t  totalQuantity;
+};
+
 class OrderBook {
   public:
     bool addOrder(const Order& order);
@@ -32,6 +37,9 @@ class OrderBook {
 
     int64_t bestBid() const;
     int64_t bestAsk() const;
+
+    std::vector<PriceLevelSummary> getTopBids(int depth) const;
+    std::vector<PriceLevelSummary> getTopAsks(int depth) const;
 
   private:
     PriceLevelMap bids;

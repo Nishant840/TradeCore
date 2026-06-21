@@ -98,6 +98,40 @@ void NetworkServer::handleClient(int fd){
                     uint64_t orderId = j.at("orderId").get<uint64_t>();
                     runner.submitCancel(orderId);
                 }
+                else if(cmd == "get_book"){
+                    std::string requestId = j.at("requestId").get<std::string>();
+                    int depth = j.value("depth", 10);
+
+                    auto bids = runner.getEngine().getOrderBook().getTopBids(depth);
+                    auto asks = runner.getEngine().getOrderBook().getTopAsks(depth);
+
+                    json response;
+                    response["event"]       = "book_snapshot";
+                    response["requestId"]   = requestId;
+
+                    json bidsJson = json::array();
+                    for(const auto& level: bids){
+                        bidsJson.push_back({
+                            {"price", toHuman(level.price)},
+                            {"quantity", level.totalQuantity}
+                        });
+                    }
+
+                    json asksJson = json::array();
+                    for(const auto& level: asks){
+                        asksJson.push_back({
+                            {"price", toHuman(level.price)},
+                            {"quantity", level.totalQuantity}
+                        });
+                    }
+
+                    response["bids"] = bidsJson;
+                    response["asks"] = asksJson;
+
+                    std::string line = response.dump() + "\n";
+                    std::lock_guard<std::mutex> lock(clientWriteMutex);
+                    write(fd, line.c_str(), line.size());
+                }
             }
             catch(const std::exception& e){
                 std::cerr << "Failed to parse command: " << e.what() << std::endl;

@@ -95,3 +95,41 @@ int64_t OrderBook::bestBid() const {
 int64_t OrderBook::bestAsk() const {
     return asks.begin()->first;
 }
+
+std::vector<PriceLevelSummary> OrderBook::getTopBids(int depth) const {
+    std::vector<PriceLevelSummary> result;
+    int count = 0;
+
+    for(const auto& [price, level] : bids){
+        if(count >= depth) break;
+
+        uint64_t total = 0;
+        for(const auto& node: level){
+            total += node.order.quantity;
+        }
+
+        result.push_back({price, total});
+        count++;
+    }
+
+    return result;
+}
+
+std::vector<PriceLevelSummary> OrderBook::getTopAsks(int depth) const {
+    std::vector<PriceLevelSummary> result;
+    int count = 0;
+
+    for(const auto& [price, level]: asks){
+        if(count >= depth) break;
+
+        uint64_t total = 0;
+        for(const auto& node: level){
+            total += node.order.quantity;
+        }
+
+        result.push_back({price, total});
+        count++;
+    }
+
+    return result;
+}

@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg-primary: #0d0f12;
+  --color-bg-secondary: #15181d;
+  --color-bg-tertiary: #1c2026;
+  --color-border: #2a2f37;
+  --color-text-primary: #e8e9ea;
+  --color-text-secondary: #8b9099;
+  --color-text-tertiary: #5a5f68;
+  --color-green: #16a05c;
+  --color-red: #e24b4a;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: ui-monospace, "SF Mono", "Courier New", monospace;
+}

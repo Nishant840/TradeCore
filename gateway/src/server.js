@@ -2,7 +2,8 @@ const fastify = require('fastify')({ logger: true });
 const websocketPlugin = require('@fastify/websocket');
 
 const EngineClient = require('./engineClient')
-const { registerRoutes } = require('./routes')
+const { registerRoutes } = require('./routes');
+const { insertTrade } = require('./persistence');
 
 const wsClients = new Set();
 
@@ -20,6 +21,10 @@ async function buildServer(){
     });
 
     engineClient.on('message', (msg) => {
+        if(msg.event === 'trade'){
+            insertTrade(msg);
+        }
+
         const payload = JSON.stringify(msg);
 
         for(const client of wsClients){

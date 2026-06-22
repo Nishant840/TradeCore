@@ -1,5 +1,6 @@
 const { nextOrderId } = require("./orderIdGenerator")
 const { nextRequestId } = require("./requestIdGenerator")
+const { insertOrder } = require("./persistence")
 
 function registerRoutes(fastify, engineClient){
     fastify.post('/order', async (request, reply) => {
@@ -30,16 +31,18 @@ function registerRoutes(fastify, engineClient){
         }
 
         const orderId = nextOrderId();
+        const orderPayload = {
+            orderId,
+            userId,
+            side,
+            type,
+            price: type === 'MARKET'?0:price,
+            quantity,
+        };
+        insertOrder(orderPayload);
 
         try{
-            engineClient.sendOrder({
-                orderId,
-                userId,
-                side,
-                type,
-                price: type==="MARKET"?0:price,
-                quantity,
-            });
+            engineClient.sendOrder(orderPayload);
         }
         catch(err){
             return reply.code(503).send({

@@ -173,6 +173,7 @@ void NetworkServer::broadcastTrade(const Trade& trade){
     j["price"]          = toHuman(trade.price);
     j["quantity"]       = trade.quantity;
     j["timestamp"]      = trade.timestamp;
+    j["isBuyerMaker"]   = trade.isBuyerMaker;
 
     std::string line = j.dump() + "\n";
 

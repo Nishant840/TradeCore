@@ -15,6 +15,7 @@ struct Trade{
     int64_t price;
     uint64_t quantity;
     uint64_t timestamp;
+    bool     isBuyerMaker;
 };
 
 using TradeCallback = std::function<void(const Trade&)>;
@@ -41,6 +42,7 @@ class MatchingEngine{
     Trade createTrade(const Order& buy,
                       const Order& sell,
                       int64_t price,
-                      uint64_t quantity
+                      uint64_t quantity,
+                      bool     isBuyerMaker
                     );
 };

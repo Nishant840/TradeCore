@@ -57,7 +57,7 @@ void MatchingEngine::matchLimit(Order& order){
                 Order& resting      = node.order;
                 uint64_t traded     = std::min(order.quantity, resting.quantity);
 
-                Trade t = createTrade(order, resting, bestAsk, traded);
+                Trade t = createTrade(order, resting, bestAsk, traded, false);
                 onTrade(t);
 
                 order.quantity      -= traded;
@@ -81,7 +81,7 @@ void MatchingEngine::matchLimit(Order& order){
                 Order& resting  = node.order;
                 uint64_t traded = std::min(order.quantity, resting.quantity);
 
-                Trade t = createTrade(resting, order, bestBid, traded);
+                Trade t = createTrade(resting, order, bestBid, traded, true);
                 onTrade(t);
 
                 order.quantity   -= traded;
@@ -107,7 +107,7 @@ void MatchingEngine::matchMarket(Order& order){
                 Order& resting  = node.order;
                 uint64_t traded = std::min(order.quantity, resting.quantity);
 
-                Trade t = createTrade(order, resting, bestAsk, traded);
+                Trade t = createTrade(order, resting, bestAsk, traded, false);
                 onTrade(t);
 
                 order.quantity -= traded;
@@ -130,7 +130,7 @@ void MatchingEngine::matchMarket(Order& order){
                 Order& resting  = node.order;
                 uint64_t traded = std::min(order.quantity, resting.quantity);
 
-                Trade t = createTrade(resting, order, bestBid, traded);
+                Trade t = createTrade(resting, order, bestBid, traded, true);
                 onTrade(t);
 
                 order.quantity -= traded;
@@ -149,7 +149,8 @@ Trade MatchingEngine::createTrade(
     const Order& buy,
     const Order& sell,
     int64_t price,
-    uint64_t quantity){
+    uint64_t quantity,
+    bool isBuyerMaker){
         auto now = std::chrono::high_resolution_clock::now();
         uint64_t ts = std::chrono::duration_cast<std::chrono::microseconds>(
             now.time_since_epoch()
@@ -162,6 +163,7 @@ Trade MatchingEngine::createTrade(
         t.price         = price;
         t.quantity      = quantity;
         t.timestamp     = ts;
+        t.isBuyerMaker  = isBuyerMaker;
 
         metrics.incrementTradeCount();
 

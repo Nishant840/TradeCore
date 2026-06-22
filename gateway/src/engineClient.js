@@ -103,6 +103,30 @@ class EngineClient extends EventEmitter {
             }
         });
     }
+
+    requestMetrics(requestId) {
+        return new Promise((resolve, reject) => {
+            const timeoutHandle = setTimeout(() => {
+                this.pendingRequests.delete(requestId);
+                reject(new Error('Engine did not respond in time'));
+            }, 2000);
+
+            this.pendingRequests.set(requestId, { resolve, timeoutHandle });
+
+            try {
+                this._send({
+                    cmd: 'get_metrics',
+                    requestId 
+                });
+            }
+            catch(err){
+                clearTimeout(timeoutHandle);
+                this.pendingRequests.delete(requestId);
+                reject(err);
+            }
+        });
+    }
+
     _send(message){
         if(!this.socket || this.socket.destroyed) {
             throw new Error('Engine socket not connected');

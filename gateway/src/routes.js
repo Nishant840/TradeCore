@@ -114,6 +114,29 @@ function registerRoutes(fastify, engineClient){
             });
         }
     });
+
+    fastify.get("/metrics", async (request, reply) => {
+        const requestId = nextRequestId();
+
+         try {
+            const snapshot = await engineClient.requestMetrics(requestId);
+            return reply.code(200).send({
+                totalOrders: snapshot.totalOrders,
+                totalTrades: snapshot.totalTrades,
+                latency: {
+                    p50Micros: snapshot.p50Micros,
+                    p95Micros: snapshot.p95Micros,
+                    p99Micros: snapshot.p99Micros,
+                },
+            });
+        } 
+        catch(err){
+            return reply.code(504).send({
+                error: 'Engine did not respond in time'
+            });
+        }
+    });
+
 }
 
 module.exports = { registerRoutes };

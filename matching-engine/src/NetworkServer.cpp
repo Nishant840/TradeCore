@@ -7,6 +7,7 @@
 #include <cstring>
 #include <sstream>
 #include <iostream>
+#include "../include/Metrics.h"
 
 using json = nlohmann::json;
 
@@ -127,6 +128,24 @@ void NetworkServer::handleClient(int fd){
 
                     response["bids"] = bidsJson;
                     response["asks"] = asksJson;
+
+                    std::string line = response.dump() + "\n";
+                    std::lock_guard<std::mutex> lock(clientWriteMutex);
+                    write(fd, line.c_str(), line.size());
+                }
+                else if (cmd == "get_metrics") {
+                    std::string requestId = j.at("requestId").get<std::string>();
+
+                    const Metrics& metrics = runner.getEngine().getMetrics();
+
+                    json response;
+                    response["event"]       = "metrics_snapshot";
+                    response["requestId"]   = requestId;
+                    response["totalOrders"] = metrics.getTotalOrders();
+                    response["totalTrades"] = metrics.getTotalTrades();
+                    response["p50Micros"]   = metrics.p50();
+                    response["p95Micros"]   = metrics.p95();
+                    response["p99Micros"]   = metrics.p99();
 
                     std::string line = response.dump() + "\n";
                     std::lock_guard<std::mutex> lock(clientWriteMutex);

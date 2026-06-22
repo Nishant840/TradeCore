@@ -1,6 +1,6 @@
 const { nextOrderId } = require("./orderIdGenerator")
 const { nextRequestId } = require("./requestIdGenerator")
-const { insertOrder } = require("./persistence")
+const { insertOrder, getRecentTrades } = require("./persistence")
 
 function registerRoutes(fastify, engineClient){
     fastify.post('/order', async (request, reply) => {
@@ -94,6 +94,23 @@ function registerRoutes(fastify, engineClient){
         catch (err) {
             return reply.code(504).send({
                 error: "Engine did not respond in time"
+            });
+        }
+    });
+
+    fastify.get("/trades", async (request, reply) => {
+        const limit = request.query.limit ? parseInt(request.query.limit, 10) : 50;
+
+        try {
+            const trades = await getRecentTrades(limit);
+            return reply.code(200).send({
+                trades
+            });
+        }
+        catch(err){
+            console.error('GET /trades failed:', err);
+            return reply.code(500).send({
+                error: "Failed to fetch trades"
             });
         }
     });

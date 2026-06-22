@@ -47,4 +47,16 @@ async function insertTrade(trade){
     }
 }
 
-module.exports = { insertOrder, insertTrade};
+async function getRecentTrades(limit = 50) {
+    const query = `
+        SELECT id, buy_order_id, sell_order_id, price, quantity, executed_at
+        FROM trades
+        ORDER BY executed_at DESC
+        LIMIT $1
+    `;
+
+    const result = await pool.query(query, [limit]);
+    return result.rows;
+}
+
+module.exports = { insertOrder, insertTrade, getRecentTrades };  

@@ -28,6 +28,7 @@ async function runLoadTest() {
     const startTime = performance.now();
     let successCount = 0;
     let errorCount = 0;
+    let errorReasons = {};
 
     for (let i = 0; i < NUM_ORDERS; i += BATCH_SIZE) {
         const batch = orders.slice(i, i + BATCH_SIZE);
@@ -46,9 +47,12 @@ async function runLoadTest() {
                     latencies.push(performance.now() - reqStart);
                 } else {
                     errorCount++;
+                    errorReasons[`HTTP ${res.status}`] = (errorReasons[`HTTP ${res.status}`] || 0) + 1;
                 }
             } catch (err) {
                 errorCount++;
+                const msg = err.message || 'Unknown Error';
+                errorReasons[msg] = (errorReasons[msg] || 0) + 1;
             }
         });
 
@@ -68,6 +72,12 @@ async function runLoadTest() {
     console.log(`Throughput     : ${throughput.toFixed(2)} orders/sec`);
     console.log(`Success Rate   : ${successCount} / ${NUM_ORDERS}`);
     console.log(`Errors         : ${errorCount}`);
+    if (errorCount > 0) {
+        console.log(`Error Reasons  :`);
+        for (const [reason, count] of Object.entries(errorReasons)) {
+            console.log(`  - ${reason}: ${count}`);
+        }
+    }
     console.log(`Client Latency : p50=${p50.toFixed(2)}ms, p95=${p95.toFixed(2)}ms, p99=${p99.toFixed(2)}ms`);
     
     console.log("\nFetching Engine Metrics...");

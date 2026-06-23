@@ -10,7 +10,7 @@ This document records the performance characteristics of the TradeCore exchange 
 | Environment | Total Orders | Elapsed Time (s) | Throughput (Orders/Sec) |
 |-------------|--------------|------------------|-------------------------|
 | Local (Apple Silicon / M-Series) | 10,000 | 0.0242871 | 411,742 |
-| Deployed (Render Free Tier)      | 10,000 | `[Run in cloud to fill]`     | `[Result]` |
+| Deployed (Render Free Tier)      | 10,000 | Pending (Requires C++ standalone run) | Pending |
 
 ---
 
@@ -23,11 +23,12 @@ This document records the performance characteristics of the TradeCore exchange 
 | Environment | Throughput (Orders/Sec) | Success Rate | p50 (ms) | p95 (ms) | p99 (ms) |
 |-------------|-------------------------|--------------|----------|----------|----------|
 | Local (M-Series) | 6,031.62         | 10000 / 10000 | 43.62ms | 82.01ms | 251.27ms |
-| Render Free Tier | `[Result]`         | 10000 / 10000 | `[Result]` | `[Result]` | `[Result]` |
+| Render Free Tier | 239.33         | 10000 / 10000 | 1161.87ms | 2163.96ms | 3096.83ms |
 
 > [!NOTE]
-> **Investigating Tail Latency (p95 -> p99)**
-> The sharp 3x jump from p95 (82ms) to p99 (251ms) is due to **PostgreSQL connection pool exhaustion**. The Node.js gateway uses `pg` with the default maximum pool size of 10 connections. Because the load test fires 500 concurrent requests, and the gateway does a "fire-and-forget" `INSERT` for every order, the database connection pool queues up the excess queries. The 251ms tail latency represents the requests stuck waiting in Node's event loop for a free DB connection, *not* the C++ engine's matching time.
+> **Investigating Tail Latency & Cold Starts**
+> * **Postgres Pool Exhaustion:** The Node.js gateway uses `pg` with the default maximum pool size of 10 connections. With a batch size of 500, the database connection pool queues up the excess queries. The 250ms (Local) and 3s (Render) tail latency represents the requests stuck waiting in Node's event loop for a free DB connection, *not* the C++ engine's matching time.
+> * **Neon DB Scale-to-Zero:** Neon's free tier scales databases to zero after inactivity. If the load test is run on a "cold" database, you may see 200-300 requests fail (`504 Gateway Timeout`) as the first batches block the event loop for 5+ seconds waiting for the database to wake up. Warming up the database with a single request prior to benchmarking yields a 100% success rate.
 
 ---
 
@@ -37,7 +38,7 @@ This document records the performance characteristics of the TradeCore exchange 
 | Environment | p50 Latency (μs) | p95 Latency (μs) | p99 Latency (μs) |
 |-------------|------------------|------------------|------------------|
 | Local (M-Series) | 3 μs | 57 μs | 105 μs |
-| Render Free Tier | `[Result] μs` | `[Result] μs` | `[Result] μs` |
+| Render Free Tier | 4 μs | 62 μs | 97 μs |
 
 ---
 

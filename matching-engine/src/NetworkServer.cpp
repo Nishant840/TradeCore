@@ -26,7 +26,7 @@ void NetworkServer::start(){
 
     sockaddr_in addr{};
     addr.sin_family         = AF_INET;
-    addr.sin_addr.s_addr    = htonl(INADDR_LOOPBACK);
+    addr.sin_addr.s_addr    = INADDR_ANY;
     addr.sin_port           = htons(port);
 
     bind(listenFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
@@ -65,10 +65,20 @@ void NetworkServer::acceptLoop(){
 void NetworkServer::handleClient(int fd){
     std::string buffer;
     char chunk[4096];
+    bool isFirstRead = true;
 
     while(running.load(std::memory_order_relaxed)){
         ssize_t bytesRead = read(fd, chunk, sizeof(chunk));
         if(bytesRead <= 0) break;
+
+        if(isFirstRead) {
+            isFirstRead = false;
+            // If the first byte isn't a JSON bracket, it's an HTTP probe from Render. Drop it instantly!
+            if(chunk[0] != '{'){
+                std::cerr << "Dropped HTTP probe connection." << std::endl;
+                break; 
+            }
+        }
 
         buffer.append(chunk, bytesRead);
 

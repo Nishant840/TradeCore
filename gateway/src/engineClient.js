@@ -12,7 +12,7 @@ class EngineClient extends EventEmitter {
     }
 
     connect() {
-        this.socket = net.createConnection(this.port, this.host, ()=>{
+        this.socket = net.createConnection({ port: this.port, host: this.host, family: 4 }, ()=>{
             console.log(`Connected to engine at ${this.host}:${this.port}`);
             this.emit('connected');
         });

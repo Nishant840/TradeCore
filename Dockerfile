@@ -9,7 +9,7 @@ COPY matching-engine/ ./
 RUN mkdir -p build && cd build && cmake .. && make
 
 # Stage 2: Runtime image — Node gateway + compiled C++ binary
-FROM node:18-bullseye-slim
+FROM node:18-bookworm-slim
 
 RUN apt-get update && apt-get install -y libstdc++6 libc6 netcat-openbsd && rm -rf /var/lib/apt/lists/*
 

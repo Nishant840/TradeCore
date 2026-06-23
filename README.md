@@ -84,30 +84,36 @@ graph TB
 
     DB[("PostgreSQL<br/>(Neon, serverless)")]
 
-    FE -->|"HTTPS REST"| REST
-    FE -->|"WSS"| WS
-    REST -->|"submitOrder / submitCancel<br/>(fire-and-forget)"| EC
-    REST -->|"requestBook / requestMetrics<br/>(correlated request/response)"| EC
-    EC <-->|"newline-delimited JSON<br/>over TCP, localhost:9000"| NS
-    NS --> CMD
-    CMD --> ER
-    ER --> ME
-    ME --> OB
-    ME --> MT
-    ME -->|"Trade callback"| NS
-    NS -->|"trade event"| EC
-    EC -->|"'message' event"| WS
-    EC -->|"'message' event"| PERSIST
-    WS -->|"broadcast to all clients"| FE
-    PERSIST -->|"INSERT order / trade"| DB
-    REST -->|"INSERT order on accept"| DB
-    REST -->|"SELECT trade history"| DB
+    FE ==>|"HTTPS REST"| REST
+    FE ==>|"WSS"| WS
+    REST ==>|"submitOrder / submitCancel<br/>(fire-and-forget)"| EC
+    REST ==>|"requestBook / requestMetrics<br/>(correlated request/response)"| EC
+    EC <==>|"newline-delimited JSON<br/>over TCP, localhost:9000"| NS
+    NS ==> CMD
+    CMD ==> ER
+    ER ==> ME
+    ME ==> OB
+    ME ==> MT
+    ME ==>|"Trade callback"| NS
+    NS ==>|"trade event"| EC
+    EC ==>|"'message' event"| WS
+    EC ==>|"'message' event"| PERSIST
+    WS ==>|"broadcast to all clients"| FE
+    PERSIST ==>|"INSERT order / trade"| DB
+    REST ==>|"INSERT order on accept"| DB
+    REST ==>|"SELECT trade history"| DB
 
-    style EngineProcess fill:#0d2818,stroke:#16a05c,color:#e8e9ea
-    style GatewayProcess fill:#1a1208,stroke:#c9a227,color:#e8e9ea
-    style Browser fill:#0d1420,stroke:#3b6ea5,color:#e8e9ea
-    style DB fill:#1f0d1a,stroke:#a23b7a,color:#e8e9ea
+    classDef engineBox fill:#EAF3DE,stroke:#3B6D11,color:#173404
+    classDef gatewayBox fill:#FAEEDA,stroke:#854F0B,color:#412402
+    classDef browserBox fill:#E6F1FB,stroke:#185FA5,color:#042C53
+    classDef dbBox fill:#FBEAF0,stroke:#993556,color:#4B1528
 
+    class EngineProcess engineBox
+    class GatewayProcess gatewayBox
+    class Browser browserBox
+    class DB dbBox
+
+    linkStyle default stroke:#5F5E5A,stroke-width:2px,color:#2C2C2A
 ```
 
 ### Request flow: placing an order that matches

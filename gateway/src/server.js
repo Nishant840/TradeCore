@@ -13,7 +13,7 @@ async function buildServer(){
     await fastify.register(websocketPlugin);
 
     await fastify.register(cors, {
-        origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+        origin: '*', // Allow Vercel frontend to fetch from this API
     });
 
     const engineClient = new EngineClient('localhost', 9000);

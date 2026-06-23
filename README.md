@@ -3,7 +3,7 @@
 
 A low-latency exchange matching engine built in C++, with a Node.js API gateway and a Next.js trading dashboard. TradeCore implements price-time priority order matching, a concurrent single-writer matching core, a TCP-based wire protocol between services, and full order/trade persistence.
 
-**Live demo:** [https://tradecore-sigma.vercel.app](https://tradecore-sigma.vercel.app/) 
+**Live demo:** [https://tradecore-sigma.vercel.app](https://tradecore-sigma.vercel.app/)  
 **API:** [https://tradecore-aedl.onrender.com](https://tradecore-aedl.onrender.com/)
 
 ----------

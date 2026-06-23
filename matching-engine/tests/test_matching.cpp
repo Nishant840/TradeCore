@@ -1,5 +1,6 @@
 #include "catch_amalgamated.hpp"
 #include "../include/MatchingEngine.h"
+#include <iostream>
 
 uint64_t nowMicros(){
     return std::chrono::duration_cast<std::chrono::microseconds>(
@@ -200,10 +201,12 @@ TEST_CASE("Concurrent stress test - quantity conservation under multiple produce
         tradeCount.fetch_add(1, std::memory_order_relaxed);
     });
 
+    auto startTime = std::chrono::high_resolution_clock::now();
+
     runner.start();
 
     const int numThreads      = 4;
-    const int ordersPerThread = 250;
+    const int ordersPerThread = 1250;
     const double price        = 100.0;
 
     std::vector<std::thread> producers;
@@ -243,8 +246,17 @@ TEST_CASE("Concurrent stress test - quantity conservation under multiple produce
 
     runner.stop();
 
+    auto endTime = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = endTime - startTime;
+
     uint64_t totalOrdersSubmitted = numThreads * ordersPerThread * 2;
     uint64_t expectedTradedQty    = numThreads * ordersPerThread;
+
+    std::cout << "--- RAW C++ ENGINE BENCHMARK ---" << std::endl;
+    std::cout << "Total Orders: " << totalOrdersSubmitted << std::endl;
+    std::cout << "Elapsed Time: " << elapsed.count() << " seconds" << std::endl;
+    std::cout << "Throughput  : " << (totalOrdersSubmitted / elapsed.count()) << " orders/sec" << std::endl;
+    std::cout << "--------------------------------" << std::endl;
 
     REQUIRE(runner.getEngine().getMetrics().getTotalOrders() == totalOrdersSubmitted);
     REQUIRE(totalTradedQty.load() == expectedTradedQty);

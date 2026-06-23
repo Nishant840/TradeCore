@@ -26,7 +26,7 @@ void NetworkServer::start(){
 
     sockaddr_in addr{};
     addr.sin_family         = AF_INET;
-    addr.sin_addr.s_addr    = INADDR_ANY;
+    addr.sin_addr.s_addr    = htonl(INADDR_LOOPBACK);
     addr.sin_port           = htons(port);
 
     bind(listenFd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));

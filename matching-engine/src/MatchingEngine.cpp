@@ -24,9 +24,18 @@ bool MatchingEngine::processOrder(Order& order){
     }
 
     auto end = std::chrono::high_resolution_clock::now();
-    uint64_t durationMicros = std::chrono::duration_cast<std::chrono::microseconds>(
-        end-start
-    ).count();
+    
+    uint64_t durationMicros;
+    if (order.timestamp > 0) {
+        uint64_t currentMicros = std::chrono::duration_cast<std::chrono::microseconds>(
+            end.time_since_epoch()
+        ).count();
+        durationMicros = (currentMicros - order.timestamp);
+    } else {
+        durationMicros = std::chrono::duration_cast<std::chrono::microseconds>(
+            end - start
+        ).count();
+    }
 
     metrics.recordOrderLatecy(durationMicros);
 

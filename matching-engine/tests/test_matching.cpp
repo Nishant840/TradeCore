@@ -206,7 +206,7 @@ TEST_CASE("Concurrent stress test - quantity conservation under multiple produce
     runner.start();
 
     const int numThreads      = 4;
-    const int ordersPerThread = 1250;
+    const int ordersPerThread = 1250000;
     const double price        = 100.0;
 
     std::vector<std::thread> producers;
@@ -234,7 +234,16 @@ TEST_CASE("Concurrent stress test - quantity conservation under multiple produce
                 sell.quantity  = 1;
                 sell.timestamp = 0;
 
+                auto nowMicros = std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::high_resolution_clock::now().time_since_epoch()
+                ).count();
+                buy.timestamp = nowMicros;
                 runner.submitOrder(buy);
+
+                nowMicros = std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::high_resolution_clock::now().time_since_epoch()
+                ).count();
+                sell.timestamp = nowMicros;
                 runner.submitOrder(sell);
             }
         });
@@ -256,6 +265,9 @@ TEST_CASE("Concurrent stress test - quantity conservation under multiple produce
     std::cout << "Total Orders: " << totalOrdersSubmitted << std::endl;
     std::cout << "Elapsed Time: " << elapsed.count() << " seconds" << std::endl;
     std::cout << "Throughput  : " << (totalOrdersSubmitted / elapsed.count()) << " orders/sec" << std::endl;
+    std::cout << "Latency p50 : " << runner.getEngine().getMetrics().p50() << " us" << std::endl;
+    std::cout << "Latency p95 : " << runner.getEngine().getMetrics().p95() << " us" << std::endl;
+    std::cout << "Latency p99 : " << runner.getEngine().getMetrics().p99() << " us" << std::endl;
     std::cout << "--------------------------------" << std::endl;
 
     REQUIRE(runner.getEngine().getMetrics().getTotalOrders() == totalOrdersSubmitted);

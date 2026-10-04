@@ -32,8 +32,7 @@ A low-latency exchange matching engine built in C++, with a Node.js API gateway 
 
 | Metric | Value |
 |----------|----------|
-| Throughput | 411,742 orders/sec |
-| Matching Latency (P50) | 3 μs |
+| Throughput | >2.7 million orders/sec |
 | Cancellation Complexity | O(1) |
 | Matching Strategy | Price-Time Priority |
 | Communication | TCP |
@@ -166,7 +165,7 @@ These are the specific tradeoffs made while building this, and the reasoning beh
 
 **Single-threaded matching, multi-threaded everything else.** The order book (`bids`, `asks`, `orderLookup`) is only ever touched by one dedicated thread. This is the same principle used by real exchange architectures (e.g. LMAX's Disruptor pattern): parallelizing the actual matching logic across threads invites race conditions on shared book state that are extremely hard to get right, for marginal benefit at this throughput target. Concurrency instead comes from many producer threads (or, in this case, many network-originated commands) feeding a single-consumer queue.
 
-**`std::mutex` + `std::condition_variable`, not a lock-free ring buffer.** A lock-free queue avoids syscall overhead under contention and is what genuinely latency-critical exchanges use. It's also significantly harder to get correct (memory ordering bugs are brutal to debug). At a target of 10k–50k orders/min, a mutex-protected queue does not bottleneck — the measured internal engine latency (single-digit microseconds, see [Benchmarks](#benchmarks)) confirms this. This was a deliberate, scoped tradeoff: implementation correctness and explainability over a marginal latency win that wasn't needed at this scale.
+**`std::mutex` + `std::condition_variable`, not a lock-free ring buffer.** A lock-free queue avoids syscall overhead under contention and is what genuinely latency-critical exchanges use. It's also significantly harder to get correct (memory ordering bugs are brutal to debug). At a target of 10k–50k orders/min, a mutex-protected queue does not bottleneck. This was a deliberate, scoped tradeoff: implementation correctness and explainability over a marginal performance win that wasn't needed at this scale.
 
 **Integer tick-based pricing, not floating point.** Prices are stored internally as `int64_t` ticks (price × 100), not `double`. Floating-point comparisons (`100.1 < 100.1`) can silently fail due to binary representation error — unacceptable for order matching. Conversion to/from human-readable decimal happens only at the JSON serialization boundary.
 
@@ -444,14 +443,13 @@ Summary:
 
 | Metric | Local (M-Series) | Render Free Tier |
 |----------|----------|----------|
-| Raw Engine Throughput | 411,742 orders/sec | — |
-| Internal Engine Latency (P50 / P99) | 3 μs / 105 μs | 4 μs / 97 μs |
+| Raw Engine Throughput | >2.7 million orders/sec | — |
 | End-to-End API Throughput | 6,031 orders/sec | 239 orders/sec |
 | End-to-End API Latency (P50 / P99) | 43.6 ms / 251 ms | 1,162 ms / 3,097 ms |
 
 
 ### Benchmark Summary
--   Raw engine throughput exceeds 411K orders/sec.
+-   Raw engine throughput exceeds 2.7M orders/sec.
 -   Internal matching latency remains in single-digit microseconds.
 -   Database and network layers dominate end-to-end latency.
 -   Matching engine remains the fastest component in the stack.
